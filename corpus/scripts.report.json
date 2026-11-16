@@ -1,0 +1,79 @@
+{
+ "scripts": 10020,
+ "characters": 560027,
+ "estimated_hours_two_voices": 20.7,
+ "by_origin": {
+  "common_voice_sentence_collector": 7101,
+  "slyszeglosy_own": 308,
+  "common_voice_europarl": 1711,
+  "slyszeglosy_templates": 900
+ },
+ "by_split": {
+  "validation": 300,
+  "train": 9420,
+  "test": 300
+ },
+ "by_category": {
+  "statement": 7388,
+  "question": 1733,
+  "exclamation": 899
+ },
+ "rarest_phones": [
+  [
+   "dʐ",
+   79
+  ],
+  [
+   "ɛ̃",
+   391
+  ],
+  [
+   "ɟ",
+   472
+  ],
+  [
+   "ʑ",
+   839
+  ],
+  [
+   "dz",
+   884
+  ],
+  [
+   "ŋ",
+   998
+  ],
+  [
+   "c",
+   2445
+  ],
+  [
+   "ɔ̃",
+   2642
+  ],
+  [
+   "x",
+   4141
+  ],
+  [
+   "dʑ",
+   5121
+  ]
+ ],
+ "diphones": 857,
+ "rejected": {
+  "common_voice_sentence_collector:length": 3133,
+  "common_voice_sentence_collector:shape": 2994,
+  "common_voice_europarl:length": 1794,
+  "common_voice_europarl:shape": 1574,
+  "common_voice_sentence_collector:punctuation": 315,
+  "common_voice_europarl:punctuation": 230,
+  "common_voice_sentence_collector:duplicate": 94,
+  "common_voice_europarl:foreign": 60,
+  "common_voice_sentence_collector:digits_acronym_archaic": 54,
+  "common_voice_sentence_collector:foreign": 44,
+  "common_voice_sentence_collector:front_end": 8,
+  "slyszeglosy_own:length": 6,
+  "common_voice_europarl:digits_acronym_archaic": 1
+ }
+}

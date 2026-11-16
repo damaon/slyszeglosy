@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "Jeśli korzystasz ze słyszę głosy, zacytuj projekt jak poniżej oraz tiny-voca, na którym się opiera."
+title: "słyszę głosy: mały dwugłosowy polski model syntezy mowy"
+type: software
+authors:
+  - given-names: Damian
+    family-names: Trojnar
+year: 2026
+license: Apache-2.0
+repository-code: "https://github.com/damaon/slyszeglosy"
+keywords:
+  - text-to-speech
+  - polish
+  - onnx
+references:
+  - type: software
+    title: "tiny-voca: a 4.5M-parameter two-voice English text-to-speech model"
+    authors:
+      - given-names: Muhammed
+        family-names: Nazeem
+        orcid: "https://orcid.org/0009-0002-9991-0217"
+    year: 2026
+    license: Apache-2.0
+    url: "https://github.com/n4ze3m/tiny-voca"

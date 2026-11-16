@@ -1,0 +1,18 @@
+{
+ "F": {
+  "audio": "F.wav",
+  "text": "Dzień dobry. Dzisiaj opowiem krótko o tym, jak wygląda zwyczajny poranek w naszym mieście: ludzie śpieszą się do pracy, a w kawiarniach pachnie świeżą kawą.",
+  "designed_with": "k2-fsa/OmniVoice 0.2.1 (weights CC-BY-NC)",
+  "instruct": "female, young adult, moderate pitch",
+  "candidate": "F0_s2",
+  "f0_median_hz": 229.2
+ },
+ "M": {
+  "audio": "M.wav",
+  "text": "Dzień dobry. Dzisiaj opowiem krótko o tym, jak wygląda zwyczajny poranek w naszym mieście: ludzie śpieszą się do pracy, a w kawiarniach pachnie świeżą kawą.",
+  "designed_with": "k2-fsa/OmniVoice 0.2.1 (weights CC-BY-NC)",
+  "instruct": "male, middle-aged, moderate pitch",
+  "candidate": "M2_s2",
+  "f0_median_hz": 152.9
+ }
+}

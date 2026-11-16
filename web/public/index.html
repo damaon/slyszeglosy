@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>słyszę głosy</title>
+<meta name="description" content="słyszę głosy: polski model syntezy mowy, 4,5 mln parametrów, działa w przeglądarce.">
+<meta property="og:title" content="słyszę głosy">
+<meta property="og:description" content="Mały polski syntezator mowy z dwoma głosami. Działa w całości w przeglądarce, tekst nie opuszcza urządzenia.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pl_PL">
+<meta property="og:site_name" content="słyszę głosy">
+<meta property="og:url" content="https://slyszeglosy-demo.damaon.workers.dev/">
+<meta property="og:image" content="https://slyszeglosy-demo.damaon.workers.dev/og.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="słyszę głosy: mały polski syntezator mowy, fala dźwięku i cytat z Reja „Iż Polacy nie gęsi, iż swój język mają”.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="słyszę głosy">
+<meta name="twitter:description" content="Mały polski syntezator mowy z dwoma głosami. Działa w całości w przeglądarce, tekst nie opuszcza urządzenia.">
+<meta name="twitter:image" content="https://slyszeglosy-demo.damaon.workers.dev/og.png">
+<link rel="canonical" href="https://slyszeglosy-demo.damaon.workers.dev/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23171512'/%3E%3Cpath d='M8 13v6M12 9v14M16 12v8M20 7v18M24 13v6' stroke='%23f4efe6' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --paper: #f6f2ea; --ink: #1b1915; --muted: #6d665b; --line: #d9d2c4; --panel: #fffdf8;
+    --accent: #b4421f; --accent-ink: #fff; --ok: #2f6b3c;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --sans: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --paper: #151412; --ink: #ece6da; --muted: #9a9284; --line: #35312a; --panel: #1d1b18; --accent: #e0703f; --accent-ink: #151412; --ok: #7fbf8c; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 17px/1.55 var(--ui); }
+  main { max-width: 760px; margin: 0 auto; padding: 56px 20px 72px; }
+  header h1 { font: 600 44px/1.05 var(--sans); letter-spacing: -0.01em; margin: 0 0 14px; }
+  header p { margin: 0; color: var(--muted); max-width: 56ch; }
+  header p strong { color: var(--ink); font-weight: 600; }
+  .panel { margin-top: 36px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
+  textarea { width: 100%; min-height: 150px; resize: vertical; border: 0; outline: 0; background: transparent; color: inherit;
+             font: 20px/1.5 var(--sans); padding: 4px; }
+  .examples { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 2px; }
+  .examples button { font: 13px var(--ui); color: var(--muted); background: transparent; border: 1px solid var(--line);
+                     border-radius: 999px; padding: 5px 11px; cursor: pointer; }
+  .examples button:hover { color: var(--ink); border-color: var(--muted); }
+  .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 22px; border-top: 1px solid var(--line); margin-top: 14px; padding-top: 14px; }
+  .voices { display: inline-flex; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
+  .voices label { padding: 7px 14px; font-size: 14px; cursor: pointer; color: var(--muted); }
+  .voices input { position: absolute; opacity: 0; pointer-events: none; }
+  .voices input:checked + span { color: var(--ink); font-weight: 600; }
+  .voices label:has(input:checked) { background: var(--paper); }
+  .voices label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .speed { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); }
+  .speed input { width: 130px; accent-color: var(--accent); }
+  .speed output { font: 13px var(--mono); color: var(--ink); min-width: 4ch; }
+  #speak { margin-left: auto; min-width: 6em; font: 600 16px var(--ui); color: var(--accent-ink); background: var(--accent); border: 0;
+           border-radius: 10px; padding: 11px 22px; cursor: pointer; }
+  #speak:disabled { opacity: 0.45; cursor: default; }
+  #speak:focus-visible, textarea:focus-visible, .examples button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .status { margin-top: 16px; font-size: 14px; color: var(--muted); min-height: 22px; }
+  .bar { height: 3px; background: var(--line); border-radius: 2px; margin-top: 8px; overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width 0.15s; }
+  .bar[hidden] { display: none; }
+  .result[hidden] { display: none; }
+  .result { margin-top: 22px; }
+  audio { width: 100%; }
+  dl { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 16px 0 0; }
+  dl div { border-top: 1px solid var(--line); padding-top: 8px; }
+  dt { font-size: 12px; color: var(--muted); }
+  dd { margin: 2px 0 0; font: 15px var(--mono); }
+  details { margin-top: 16px; font-size: 14px; color: var(--muted); }
+  details pre { white-space: pre-wrap; word-break: break-word; font: 13px/1.6 var(--mono); color: var(--ink); margin: 8px 0 0; }
+  .facts { margin-top: 44px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border-top: 1px solid var(--line); }
+  .facts div { padding: 16px 12px 16px 0; border-bottom: 1px solid var(--line); }
+  .facts b { display: block; font: 600 22px var(--sans); }
+  .facts span { font-size: 13px; color: var(--muted); }
+  footer { margin-top: 36px; font-size: 14px; color: var(--muted); }
+  footer a { color: var(--ink); text-underline-offset: 3px; margin-right: 16px; }
+  footer p { margin: 14px 0 0; max-width: 62ch; }
+  @media (max-width: 560px) {
+    header h1 { font-size: 34px; } main { padding-top: 36px; }
+    dl { grid-template-columns: repeat(2, 1fr); } .facts { grid-template-columns: repeat(2, 1fr); }
+    #speak { margin-left: 0; width: 100%; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>słyszę głosy</h1>
+    <p>Polski model syntezy mowy z dwoma głosami, <strong>4,5 mln parametrów</strong>, wytrenowany od zera.
+       Działa w całości w przeglądarce: nic, co wpiszesz, nie opuszcza Twojego urządzenia.</p>
+  </header>
+
+  <section class="panel">
+    <textarea id="text" spellcheck="false" aria-label="Tekst do przeczytania">A niechaj narodowie wżdy postronni znają,
+Iż Polacy nie gęsi, iż swój język mają.</textarea>
+    <div class="examples" id="examples"></div>
+    <div class="controls">
+      <div class="voices" role="radiogroup" aria-label="Głos">
+        <label><input type="radio" name="voice" value="0" checked><span>Kobieta</span></label>
+        <label><input type="radio" name="voice" value="1"><span>Mężczyzna</span></label>
+      </div>
+      <label class="speed">Tempo <input id="speed" type="range" min="0.7" max="1.4" step="0.05" value="1"><output id="speed-value">1.00</output></label>
+      <button id="speak" disabled>Czytaj</button>
+    </div>
+  </section>
+
+  <div class="status" id="status" role="status">Ładowanie…</div>
+  <div class="bar" id="bar"><i></i></div>
+
+  <section class="result" id="result" hidden>
+    <audio id="audio" controls></audio>
+    <dl>
+      <div><dt>Nagranie</dt><dd id="m-audio">–</dd></div>
+      <div><dt>Czas generowania</dt><dd id="m-time">–</dd></div>
+      <div><dt>Szybkość</dt><dd id="m-speed">–</dd></div>
+      <div><dt>Tekst na fonemy</dt><dd id="m-phonemes">–</dd></div>
+    </dl>
+    <details><summary>Fonemy</summary><pre id="phonemes"></pre></details>
+  </section>
+
+  <section class="facts">
+    <div><b>4 533 451</b><span>parametrów, z generatorem fali</span></div>
+    <div><b>21 MB</b><span>plik modelu (ONNX, float32)</span></div>
+    <div><b>24 kHz</b><span>dźwięk mono</span></div>
+    <div><b>2 głosy</b><span>kobiecy i męski, syntetyczne</span></div>
+    <div><b>18 godzin</b><span>syntetycznej mowy do treningu</span></div>
+    <div><b>CC-BY-NC 4.0</b><span>wagi (kod: Apache-2.0)</span></div>
+  </section>
+
+  <footer>
+    <a href="https://github.com/damaon/slyszeglosy" rel="noreferrer">Kod na GitHubie</a>
+    <a href="https://huggingface.co/Damaon/slyszeglosy" rel="noreferrer">Wagi na Hugging Face</a>
+    <a href="https://github.com/n4ze3m/tiny-voca" rel="noreferrer">Inspiracja: tiny-voca</a>
+    <a href="https://huggingface.co/k2-fsa/OmniVoice" rel="noreferrer">Nauczyciel: OmniVoice</a>
+    <p>Pierwsza wizyta pobiera ok. 30 MB: model i środowisko Pythona dla fonetyzera. Tylko po polsku. Obce nazwy
+       i nietypowa pisownia bywają czytane źle. Użytek niekomercyjny (CC-BY-NC 4.0).</p>
+  </footer>
+</main>
+
+<script src="player.js"></script>
+<script>
+const EXAMPLES = [
+  ["Rej", "A niechaj narodowie wżdy postronni znają,\nIż Polacy nie gęsi, iż swój język mają."],
+  ["Powitanie", "Dzień dobry! Mówi słyszę głosy, mały polski syntezator mowy, który działa w całości w Twojej przeglądarce."],
+  ["Liczby", "Spotkanie przełożono na 15:30, 14 marca 2027 r. Bilet kosztuje 24,50 zł, a do celu zostało 120 km."],
+  ["Pytanie", "Naprawdę myślałeś, że zapomnę o Twoich urodzinach? Oczywiście, że nie!"],
+  ["Opowieść", "Nigdy wcześniej nie widziała morza, więc długo stała na brzegu, nie mówiąc ani słowa."],
+  ["Wiersz", "Stoi na stacji lokomotywa,\nCiężka, ogromna i pot z niej spływa:\nTłusta oliwa.\nStoi i sapie, dyszy i dmucha,\nŻar z rozgrzanego jej brzucha bucha."],
+  ["Łamaniec","W Szczebrzeszynie chrząszcz brzmi w trzcinie, a źdźbło trawy drży na wietrze."],
+];
+const $ = (id) => document.getElementById(id);
+const worker = new Worker("worker.js");
+let ready = false, busy = false, request = 0, url = null, rate = 0, live = null;
+
+for (const [label, text] of EXAMPLES) {
+  const button = document.createElement("button");
+  button.textContent = label;
+  button.onclick = () => { $("text").value = text; $("text").focus(); };
+  $("examples").append(button);
+}
+$("speed").oninput = () => { $("speed-value").textContent = Number($("speed").value).toFixed(2); };
+
+function setStatus(text, progress) {
+  $("status").textContent = text;
+  $("bar").hidden = progress == null;
+  if (progress != null) $("bar").firstElementChild.style.width = Math.round(progress * 100) + "%";
+}
+// While the sentences are playing, the button stops them.
+function update() {
+  const playing = live !== null && live.playing;
+  $("speak").textContent = playing ? "Stop" : "Czytaj";
+  $("speak").disabled = !playing && (!ready || busy || !$("text").value.trim());
+}
+$("text").oninput = update;
+
+function wav(samples, rate) {
+  const buffer = new ArrayBuffer(44 + samples.length * 2);
+  const view = new DataView(buffer);
+  const text = (offset, value) => { for (let i = 0; i < value.length; i++) view.setUint8(offset + i, value.charCodeAt(i)); };
+  text(0, "RIFF"); view.setUint32(4, 36 + samples.length * 2, true); text(8, "WAVEfmt ");
+  view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, 1, true);
+  view.setUint32(24, rate, true); view.setUint32(28, rate * 2, true); view.setUint16(32, 2, true); view.setUint16(34, 16, true);
+  text(36, "data"); view.setUint32(40, samples.length * 2, true);
+  for (let i = 0; i < samples.length; i++) view.setInt16(44 + i * 2, Math.max(-1, Math.min(1, samples[i])) * 32767, true);
+  return new Blob([buffer], { type: "audio/wav" });
+}
+
+let phonemes = [];
+worker.onmessage = ({ data }) => {
+  if (data.type === "status") setStatus(data.text, data.progress);
+  else if (data.type === "ready") { ready = true; rate = data.sampleRate; setStatus("Gotowe."); update(); }
+  else if (data.type === "sentence" && data.id === request) {
+    phonemes.push(data.phonemes);
+    if (live && data.audio) live.add(data.audio, data.sampleRate);
+    setStatus(`Zdanie ${data.index + 1} z ${data.total}`, (data.index + 1) / data.total);
+  } else if (data.type === "done" && data.id === request) {
+    busy = false; update();
+    const seconds = data.audio.length / data.sampleRate;
+    if (url) URL.revokeObjectURL(url);
+    url = URL.createObjectURL(wav(data.audio, data.sampleRate));
+    $("audio").src = url;
+    // The sentences have been playing since the first one was made, so the whole clip only waits in the player.
+    // Where they could not be heard, it plays now.
+    if (!live || !live.end()) $("audio").play().catch(() => {});
+    $("m-audio").textContent = seconds.toFixed(1) + " s";
+    $("m-time").textContent = (data.totalTime / 1000).toFixed(2) + " s";
+    $("m-speed").textContent = (seconds / (data.totalTime / 1000)).toFixed(1) + "× szybciej niż czas rzeczywisty";
+    $("m-phonemes").textContent = Math.round(data.phonemeTime) + " ms";
+    $("phonemes").textContent = phonemes.join("\n");
+    $("result").hidden = false;
+    setStatus("Gotowe.");
+  } else if (data.type === "error") {
+    busy = false;
+    if (live) live.end();
+    update();
+    setStatus(data.plain ? data.message : "Coś poszło nie tak: " + data.message);
+  }
+};
+worker.onerror = (event) => setStatus("Nie udało się uruchomić: " + event.message);
+
+// Sound has to start inside a click, so the player is made here and not when the first sentence arrives.
+function listen() {
+  const Context = window.AudioContext || window.webkitAudioContext;
+  if (!live && Context) {
+    let context = null;
+    try { context = new Context({ sampleRate: rate }); } catch (error) { try { context = new Context(); } catch (failed) {} }
+    if (context) live = livePlayer(context, update);
+  }
+  $("audio").pause();
+  if (live) live.begin();
+}
+$("audio").onplay = () => { if (live) live.stop(); };
+
+$("speak").onclick = () => {
+  if (live && live.playing) { live.stop(); return; }
+  busy = true; phonemes = [];
+  request += 1;
+  listen();
+  update();
+  setStatus("Czytam…", 0);
+  worker.postMessage({ type: "speak", id: request, text: $("text").value,
+                       voice: Number(document.querySelector("input[name=voice]:checked").value), speed: Number($("speed").value) });
+};
+$("text").addEventListener("keydown", (event) => {
+  if ((event.metaKey || event.ctrlKey) && event.key === "Enter" && !$("speak").disabled) $("speak").click();
+});
+
+setStatus("Ładowanie modelu i fonetyzera…");
+worker.postMessage({ type: "load" });
+</script>
+</body>
+</html>
