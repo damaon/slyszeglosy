@@ -11,7 +11,7 @@ import re
 import unicodedata
 
 from .lexicon import WORDS
-from .numbers import cardinal, digits, ordinal, plural
+from .numbers import CARDINAL_CASES, cardinal, cardinal_case, digits, ordinal, plural
 
 QUOTES = str.maketrans({"‘": "'", "’": "'", "‚": "'", "‛": "'", "`": "'", "´": "'",
                         "“": '"', "”": '"', "„": '"', "‟": '"', "«": '"', "»": '"',
@@ -296,7 +296,7 @@ def abbreviations(text):
                 previous = previous.lower()     # capitalised only because it starts the sentence
             if short in NEEDS_NAME and not re.match(rf"\s+[{UPPER}]", following):
                 return m[0]
-            if short in NEEDS_WORD and not re.match(rf"\s+[{LOWER}]", following):
+            if short in NEEDS_WORD and not re.match(rf"\s+{MARK}?[{LOWER}]", following):
                 return m[0]
             if short == "im." and not (previous.lower() in INSTITUTIONS or previous[:1].isupper()):
                 return m[0]
@@ -336,15 +336,113 @@ def hyphens(text):
     return re.sub(rf"[\w|ˈ]+(?:-[\w|ˈ]+)+", joined, text)
 
 
+# Prepositions and the case of a number after them. "z/ze" is genitive (from) unless the
+# noun is instrumental (with); the others with two cases decline only on noun evidence,
+# otherwise the number is accusative, the same as the nominative ("na pięć dni", "za dwa tygodnie").
+GENITIVE = frozenset("""od ode do bez dla u około koło spod spode zza obok podczas według wśród spośród oprócz
+    sprzed znad naprzeciw naprzeciwko wokół dookoła powyżej poniżej z ze""".split())
+DATIVE = frozenset("dzięki ku przeciw przeciwko wbrew".split())
+INSTRUMENTAL = frozenset("z ze przed nad pod za między pomiędzy".split())
+LOCATIVE = frozenset("w we na o po przy".split())
+PREPOSITIONS = GENITIVE | DATIVE | INSTRUMENTAL | LOCATIVE
+# Feminine nouns after "dwa" (dwie osoby, z dwiema osobami): common nouns, plural nominative and instrumental.
+FEMININE = frozenset("""osoby osobami godziny godzinami minuty minutami sekundy sekundami kobiety kobietami
+    dziewczyny dziewczynami siostry siostrami córki córkami żony żonami matki matkami babcie babciami ciocie
+    ciociami strony stronami książki książkami karty kartami butelki butelkami szklanki szklankami tabletki
+    tabletkami łyżki łyżkami złotówki złotówkami rzeczy rzeczami części częściami noce nocami doby dobami
+    sztuki sztukami klasy klasami szkoły szkołami firmy firmami rodziny rodzinami ulice ulicami drogi drogami
+    ręce rękami rękoma nogi nogami opcje opcjami wersje wersjami zmiany zmianami sprawy sprawami lekcje
+    lekcjami metody metodami kawy kawami herbaty herbatami połowy połowami mile milami litery literami cyfry
+    cyframi liczby liczbami linie liniami sale salami bramki bramkami gwiazdki gwiazdkami nagrody nagrodami
+    kategorie kategoriami grupy grupami drużyny drużynami partie partiami umowy umowami faktury fakturami
+    wiadomości wiadomościami odpowiedzi odpowiedziami""".split())
+# Only numbers written in digits are declined, never number words the author wrote ("ze
+# cztery kilometry" means "about four"). ``mark_cases`` tags such a number right after its
+# preposition while it is still digits; ``cases`` declines the words it became.
+MARK, NOUN = "\ue000", "\ue001"
+_PREPOSITION_WORDS = "|".join(sorted(PREPOSITIONS | {"ok."}, key=len, reverse=True)).replace(".", r"\.")
+_MARKABLE = re.compile(rf"(?<![\w-])(?P<p>(?i:{_PREPOSITION_WORDS})) (?P<n>\d{{1,3}})(?![\d.,:/]\d|\d| \d{{3}}\b)"
+                       rf"(?!\s*(?:r\.|rok\w*|tys\.|mln|mld|{'|'.join(MONTHS)})(?![{LOWER}]))")
+_FEMININE_TWO = re.compile(rf"(?<![\d.,{MARK}])(?P<n>\d{{0,2}}2)(?![\d.,:]\d|\d)(?= (?:[^\W\d_]+ )?(?:{'|'.join(sorted(FEMININE))})\b)")
+_NUMBER_WORDS = "|".join(sorted(CARDINAL_CASES, key=len, reverse=True))
+_AFTER_PREPOSITION = re.compile(rf"(?<![\w-])(?P<p>[^\W\d_]+) {MARK}(?P<n>(?:(?:{_NUMBER_WORDS}) )*(?:{_NUMBER_WORDS}|jeden))\b"
+                                rf"(?=(?P<next>(?: [^\W\d_]+){{0,2}}))")
+_NOT_A_NOUN = frozenset("""i a lub albo czy przecinek całe całych tysiąc tysiące tysięcy milion miliony milionów
+    miliard miliardy miliardów""".split())
+# Nouns the normaliser itself writes after 2-4 (kilometry, złote): their genitive plural.
+_FEW_TO_MANY = {forms[1]: forms[2] for forms in [*UNITS.values(), *(f for pair in CURRENCIES.values() for f in pair)]
+                if forms[1] != forms[2]}
+
+
+def mark_cases(text):
+    """Tag a number of up to three digits that follows a preposition (see ``MARK``)."""
+    return _MARKABLE.sub(lambda m: f"{m['p']} {MARK}{m['n']}", text)
+
+
+def feminine_two(text):
+    """A number ending in 2 before a common feminine noun: "2 osoby" -> "dwie osoby"."""
+    def two(m):
+        n = int(m["n"])
+        if n % 100 == 12:
+            return m[0]
+        words = cardinal(n).split()
+        return " ".join(words[:-1] + ["dwie"])
+    return _FEMININE_TWO.sub(two, text)
+
+
+def _evidence(words):
+    """The case shown by the ending of the first one or two words after the number."""
+    for word in words:
+        if len(word) > 3 and word.endswith("mi"):
+            return "inst"
+        if len(word) > 3 and word.endswith("ach"):
+            return "loc"
+        if len(word) > 3 and word.endswith("om"):
+            return "dat"
+    return None
+
+
+def cases(text):
+    """Numbers (written in digits) after a preposition in the case it governs: "z 5 osobami"
+    -> "z pięcioma osobami", "w 3 miastach" -> "w trzech miastach", "dla 2 osób" -> "dla
+    dwóch osób", "do 3 km" -> "do trzech kilometrów". Numbers from a thousand up and a lone
+    "jeden" (its gender is unknown) are left as they are."""
+    def inflect(m):
+        preposition = m["p"].lower()
+        words, following = m["n"].split(), m["next"].lower().split()
+        if words[-1] == "dwa" and any(word in FEMININE for word in following):
+            words[-1] = "dwie"                                                  # na dwie godziny
+        if preposition not in PREPOSITIONS or words == ["jeden"] or (following and following[0] in _NOT_A_NOUN):
+            return f"{m['p']} {' '.join(words)}"
+        evidence = _evidence(following)
+        if preposition in DATIVE:
+            case = "dat"
+        elif evidence == "inst" and preposition in INSTRUMENTAL:
+            case = "inst"
+        elif evidence == "loc" and preposition in LOCATIVE:
+            case = "loc"
+        elif preposition in GENITIVE:
+            case = "gen"
+        else:
+            return f"{m['p']} {' '.join(words)}"
+        # A genitive number takes the noun's genitive plural; NOUN marks it for the next step.
+        return f"{m['p']} {' '.join(cardinal_case(words, case))}" + (NOUN if case == "gen" else "")
+
+    text = _AFTER_PREPOSITION.sub(inflect, text)
+    text = re.sub(rf"{NOUN} (\w+)", lambda m: " " + _FEW_TO_MANY.get(m[1], m[1]), text)    # do trzech kilometrów
+    return text.replace(NOUN, "").replace(MARK, "")
+
+
 def normalize(text):
     text = unicodedata.normalize("NFKC", text).translate(QUOTES)
     text = re.sub(r"\.{3,}", "…", text)
     text = re.sub(r"-{2,}|(?<=\s)-(?=\s)", "—", text)
     text = SPACES.sub(" ", text).replace("|", " ").replace("ˈ", "")    # the respelling marks are ours
     text = re.sub(r"(?<=\w)'(?=\w)", "", text)                  # O'Neill, McDonald's
-    for step in (phones, groups, dates, years, times, money, percents, units, romans, plain_numbers, abbreviations, acronyms):
+    for step in (mark_cases, feminine_two, phones, groups, dates, years, times, money, percents, units, romans, plain_numbers,
+                 abbreviations, acronyms):
         text = step(text)
     text = hyphens(text)
     for symbol, words in SYMBOLS.items():
         text = text.replace(symbol, words)
-    return re.sub(r"\s+", " ", text).strip()
+    return cases(re.sub(r"\s+", " ", text).strip())

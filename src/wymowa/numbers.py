@@ -96,6 +96,36 @@ def ordinal(n, form="m_nom"):
     return " ".join(parts)
 
 
+# Cardinal words in the oblique cases: (genitive, dative, instrumental, locative).
+# 5 and up have one form for genitive, dative and locative; 500-900 one form for all.
+CASES = ("gen", "dat", "inst", "loc")
+CARDINAL_CASES = {
+    "dwa": ("dwóch", "dwóm", "dwoma", "dwóch"), "dwie": ("dwóch", "dwóm", "dwiema", "dwóch"),
+    "trzy": ("trzech", "trzem", "trzema", "trzech"), "cztery": ("czterech", "czterem", "czterema", "czterech"),
+    "sto": ("stu", "stu", "stoma", "stu"), "dwieście": ("dwustu", "dwustu", "dwustoma", "dwustu"),
+}
+for _nominative, _stem in (("pięć", "pięci"), ("sześć", "sześci"), ("siedem", "siedmi"), ("osiem", "ośmi"),
+                           ("dziewięć", "dziewięci"), ("dziesięć", "dziesięci"), ("jedenaście", "jedenast"),
+                           ("dwanaście", "dwunast"), ("trzynaście", "trzynast"), ("czternaście", "czternast"),
+                           ("piętnaście", "piętnast"), ("szesnaście", "szesnast"), ("siedemnaście", "siedemnast"),
+                           ("osiemnaście", "osiemnast"), ("dziewiętnaście", "dziewiętnast"), ("dwadzieścia", "dwudziest"),
+                           ("trzydzieści", "trzydziest"), ("czterdzieści", "czterdziest"),
+                           ("pięćdziesiąt", "pięćdziesięci"), ("sześćdziesiąt", "sześćdziesięci"),
+                           ("siedemdziesiąt", "siedemdziesięci"), ("osiemdziesiąt", "osiemdziesięci"),
+                           ("dziewięćdziesiąt", "dziewięćdziesięci"), ("trzysta", "trzyst"), ("czterysta", "czteryst")):
+    CARDINAL_CASES[_nominative] = (_stem + "u", _stem + "u", _stem + "oma", _stem + "u")
+for _nominative, _form in (("pięćset", "pięciuset"), ("sześćset", "sześciuset"), ("siedemset", "siedmiuset"),
+                           ("osiemset", "ośmiuset"), ("dziewięćset", "dziewięciuset")):
+    CARDINAL_CASES[_nominative] = (_form,) * 4
+
+
+def cardinal_case(words, case):
+    """Cardinal words below 1000 (``["dwadzieścia", "pięć"]``) in ``case`` (one of ``CASES``):
+    every word declines, except a final ``jeden`` after tens (dwudziestu jeden)."""
+    index = CASES.index(case)
+    return [word if word == "jeden" else CARDINAL_CASES[word][index] for word in words]
+
+
 def digits(text):
     """Digit by digit: ``"0147"`` -> ``"zero jeden cztery siedem"``."""
     return " ".join(ONES[int(d)] for d in text)

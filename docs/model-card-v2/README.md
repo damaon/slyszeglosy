@@ -195,7 +195,8 @@ odsłuchowego.
 - Styl lektorski z czytania książek; emocje i potoczna mowa są słabiej
   reprezentowane.
 - Słychać, że głos jest syntetyczny (generator źródło-filtr).
-- Liczebniki po przyimkach nie są odmieniane („z 5 osobami”).
+- Liczba po przyimku jest odmieniana („z 5 osobami” → „z pięcioma osobami”), ale
+  bez samotnej jedynki („z 1 osobą”) i liczb od tysiąca w górę.
 - Obce nazwy i nietypowa pisownia bywają czytane źle; wymowa zależy od
   reguł `wymowa` i słownika wyjątków `src/wymowa/lexicon.py`.
 - Bez strumieniowania.
