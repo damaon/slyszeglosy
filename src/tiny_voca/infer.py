@@ -178,7 +178,7 @@ def main():
     source = parser.add_mutually_exclusive_group(required=True)
     source.add_argument("--text", help="Text of any length; it is read sentence by sentence")
     source.add_argument("--text-file", type=Path, help="Read the text from a file (UTF-8)")
-    parser.add_argument("--voice", choices=("F", "M"), default="F")
+    parser.add_argument("--voice", help="A voice of the checkpoint (V1: F or M; V2: MC); default: its first voice")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--speed", type=float, default=1)
     parser.add_argument("--pitch-shift", type=float, default=0, help="Added to log F0 (0.058 is about one semitone)")
@@ -194,6 +194,10 @@ def main():
     elif FRONTEND_VARIABLE not in os.environ:
         match_frontend(args.checkpoint)
     model = load_model(args.checkpoint, args.device, check_frontend=not args.allow_frontend_mismatch)
+    voices = model.config.speakers
+    args.voice = args.voice or voices[0]
+    if args.voice not in voices:
+        parser.error(f"--voice must be one of this checkpoint's voices: {', '.join(voices)}")
     text = args.text if args.text is not None else args.text_file.read_text(encoding="utf-8")
     try:
         raw, spoken = speak_text(model, text, args.voice, args.speed, args.pitch_shift, pitch_range=args.pitch_range, peak=None)

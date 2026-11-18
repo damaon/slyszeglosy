@@ -32,8 +32,9 @@ def main():
     parser.add_argument("--count", type=int, default=300)
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--config", type=Path, help="Model configuration JSON (voices other than F and M)")
     args = parser.parse_args()
-    c = Config()
+    c = Config.from_dict(json.loads(args.config.read_text())) if args.config else Config()
     recognizer = PhoneRecognizer(args.device)
     rows = [json.loads(line) for line in (args.features / (args.split + ".jsonl")).read_text(encoding="utf-8").split("\n") if line.strip()][:args.count]
     offsets, runs = collections.defaultdict(list), collections.Counter()

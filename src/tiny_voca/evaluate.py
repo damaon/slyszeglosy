@@ -128,7 +128,8 @@ def main():
             jobs += [{"group": split, "voice": voice, "index": i, "id": dataset.rows[i]["id"], "text": dataset.rows[i]["text"]} for i in chosen]
     for number, text in enumerate(NOVEL_SENTENCES[:args.novel]):
         if hashlib.sha256(text.strip().encode()).hexdigest() in known_texts:
-            raise ValueError("a 'novel' sentence is part of the dataset")
+            print(f"skipping novel sentence {number}: it is part of the dataset ({text})", flush=True)
+            continue
         jobs += [{"group": "novel", "voice": voice, "index": None, "id": f"novel{number:02d}_{voice}", "text": text} for voice in c.speakers]
 
     samples = []
