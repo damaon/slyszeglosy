@@ -133,7 +133,7 @@ class Exportable(nn.Module):
         wave = core + (harmonics - whole) * torch.cos((whole + 1) * theta)
         return wave * torch.sqrt(2.0 / harmonics)
 
-    def _vocoder(self, hidden, f0, total, noise):
+    def _vocoder(self, hidden, f0, total, noise, breath=None):
         c = self.model.config
         v = self.model.vocoder
         last = total - 1
@@ -158,14 +158,18 @@ class Exportable(nn.Module):
         shape = torch.cat((shape[..., :1] + gain, shape[..., 1:]), dim=-1)
         noise_real, noise_imaginary = self._response(shape, self.noise_real, self.noise_imaginary)
         pulses = self._pulses(f0)
-        if noise is None:
-            noise = torch.randn_like(pulses)
+        used = torch.arange(c.hop * total, device=hidden.device)
+        noise = torch.randn_like(pulses) if noise is None else noise.index_select(1, used)
+        if c.aspiration > 0:
+            breath = torch.randn_like(pulses) if breath is None else breath.index_select(1, used)
+            voiced = (self._filter(pulses, harmonic_real * v.pulse_share, harmonic_imaginary * v.pulse_share, "synth", c.synth_fft, c.synth_hop)
+                      + self._filter(breath, harmonic_real * v.breath_share, harmonic_imaginary * v.breath_share, "synth",
+                                     c.synth_fft, c.synth_hop))
         else:
-            noise = noise.index_select(1, torch.arange(c.hop * total, device=hidden.device))
-        return (self._filter(pulses, harmonic_real, harmonic_imaginary, "synth", c.synth_fft, c.synth_hop)
-                + self._filter(noise, noise_real, noise_imaginary, "noise", c.noise_fft, c.noise_hop))
+            voiced = self._filter(pulses, harmonic_real, harmonic_imaginary, "synth", c.synth_fft, c.synth_hop)
+        return voiced + self._filter(noise, noise_real, noise_imaginary, "noise", c.noise_fft, c.noise_hop)
 
-    def forward(self, tokens, stress, voice, speed, pitch_shift, pitch_range, noise=None):
+    def forward(self, tokens, stress, voice, speed, pitch_shift, pitch_range, noise=None, breath=None):
         m = self.model
         c = m.config
         token_mask = torch.ones_like(tokens, dtype=torch.bool)
@@ -198,7 +202,7 @@ class Exportable(nn.Module):
         condition = torch.stack((pitch.clamp(-2.0, 1.5), voiced, prosody[..., 2].clamp(-4.5, 3.0)), dim=-1)
         acoustic = m.acoustic_stack(prosody_hidden + m.prosody_projection(condition), frame_mask)
         f0 = (c.pitch_reference_hz * torch.exp(pitch + pitch_shift)).clamp(c.f0_min, c.f0_max)
-        return self._vocoder(acoustic, f0, total, noise), durations
+        return self._vocoder(acoustic, f0, total, noise, breath), durations
 
 
 def example_inputs(length=24):
@@ -216,6 +220,10 @@ def export(model, path, external_noise=False, opset=17):
         inputs = (*inputs, torch.randn(1, model.config.hop * model.config.max_frames))
         names.append("noise")
         axes["noise"] = {1: "noise_samples"}
+        if model.config.aspiration > 0:
+            inputs = (*inputs, torch.randn(1, model.config.hop * model.config.max_frames))
+            names.append("breath")
+            axes["breath"] = {1: "breath_samples"}
     with torch.no_grad():
         torch.onnx.export(wrapper, inputs, str(path), input_names=names, output_names=list(OUTPUTS), dynamic_axes=axes,
                           opset_version=opset, do_constant_folding=True, dynamo=False)

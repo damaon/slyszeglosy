@@ -42,6 +42,9 @@ class Config:
     cep_anti: int = 16
     noise_cep: int = 32
     harmonic_limit: float = 0.47
+    # Share of the voiced source replaced by noise above 1 kHz (ramping in up to 4 kHz):
+    # the breath that zero-phase harmonics lack, heard as a buzz. Inference only; 0 = off.
+    aspiration: float = 0.0
     max_tokens: int = 512
     max_frames: int = 3000
     mel_mean: float = -5.0
@@ -67,6 +70,8 @@ class Config:
             raise ValueError("layer counts must be positive and the kernel odd")
         if min(self.mel_scale, self.energy_scale) <= 0 or not 0 < self.harmonic_limit < 0.5:
             raise ValueError("invalid normalization scale or harmonic limit")
+        if not 0 <= self.aspiration < 1:
+            raise ValueError("aspiration must be in [0, 1)")
 
     def to_dict(self):
         return asdict(self)

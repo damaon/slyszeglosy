@@ -20,6 +20,7 @@ import torch
 
 from tiny_voca.export import Exportable
 from tiny_voca.infer import load_model, match_frontend
+from tiny_voca.model import breath_noise
 from tiny_voca.text import phonemize
 
 SENTENCES = (
@@ -67,13 +68,17 @@ def main():
             reference, lengths, details = model.synthesize(tokens, stress, torch.tensor([len(phones)]), torch.tensor([voice]))
             reference = reference[0, :int(lengths[0])].numpy()
             noise = torch.randn(len(reference), generator=torch.Generator().manual_seed(0))[None]
+            breath = breath_noise(len(reference), 0)[None] if model.config.aspiration > 0 else None
             one = lambda value: torch.tensor([value])
             with torch.no_grad():
-                rewritten, durations = wrapper(tokens, stress, torch.tensor([voice]), one(1.0), one(0.0), one(1.0), noise)
+                rewritten, durations = wrapper(tokens, stress, torch.tensor([voice]), one(1.0), one(0.0), one(1.0), noise, breath)
             feed = feeds(phones, voice)
-            padded = np.zeros((1, hop * model.config.max_frames), dtype=np.float32)
-            padded[0, :noise.shape[1]] = noise[0].numpy()
-            exported, exported_durations = exact.run(None, {**feed, "noise": padded})
+            for key, stream in (("noise", noise), ("breath", breath)):
+                if stream is not None:
+                    padded = np.zeros((1, hop * model.config.max_frames), dtype=np.float32)
+                    padded[0, :stream.shape[1]] = stream[0].numpy()
+                    feed[key] = padded
+            exported, exported_durations = exact.run(None, feed)
             peak = float(np.abs(reference).max())
             rows.append({"sentence": number, "voice": name, "tokens": len(phones), "seconds": round(len(reference) / rate, 2),
                          "same_durations": bool((exported_durations == details["durations"].numpy()).all()),

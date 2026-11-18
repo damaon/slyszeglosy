@@ -143,6 +143,11 @@ def pulse_train(f0, sample_rate, hop, limit=0.47, phase=None):
     return (wave * torch.sqrt(2.0 / harmonics)).float()
 
 
+def breath_noise(samples, seed):
+    """The aspiration noise stream of one row, seeded apart from the noise branch's stream."""
+    return torch.randn(samples, generator=torch.Generator().manual_seed(seed + 1_000_003))
+
+
 def filtered(source, response, fft, hop, window):
     """Time-varying filtering: response [B, frames, bins] multiplies the STFT."""
     spectrum = torch.stft(source, fft, hop, window=window, center=True, pad_mode="constant", return_complex=True)
@@ -185,6 +190,10 @@ class SourceFilter(nn.Module):
         self.register_buffer("anti_lifter", lifter(c.cep_anti, 1), persistent=False)
         self.register_buffer("noise_lifter", lifter(c.noise_cep, 0), persistent=False)
         self.register_buffer("synth_window", torch.hann_window(c.synth_fft), persistent=False)
+        frequency = torch.arange(c.synth_fft // 2 + 1, dtype=torch.float32) * c.sample_rate / c.synth_fft
+        breath = c.aspiration * ((frequency - 1000) / 3000).clamp(0, 1)
+        self.register_buffer("pulse_share", torch.sqrt(1 - breath), persistent=False)
+        self.register_buffer("breath_share", torch.sqrt(breath), persistent=False)
         self.register_buffer("noise_window", torch.hann_window(c.noise_fft), persistent=False)
 
     @staticmethod
@@ -204,7 +213,7 @@ class SourceFilter(nn.Module):
         # then the same whether it stands alone or is padded inside a batch.
         return filtered(F.pad(source, (0, fft // 2)), response, fft, hop, window)[:, :source.shape[-1]]
 
-    def forward(self, hidden, f0, lengths, noise=None, phase=None):
+    def forward(self, hidden, f0, lengths, noise=None, phase=None, breath=None):
         c = self.config
         frames = hidden.shape[1]
         samples = frames * c.hop
@@ -233,8 +242,16 @@ class SourceFilter(nn.Module):
             pulses = pulse_train(f0, c.sample_rate, c.hop, c.harmonic_limit, phase) * audible
             if noise is None:
                 noise = torch.randn(hidden.shape[0], samples, device=hidden.device)
-            wave = (self._shape(pulses, harmonic_response, c.synth_fft, c.synth_hop, self.synth_window)
-                    + self._shape(noise * audible, noise_response, c.noise_fft, c.noise_hop, self.noise_window))
+            if c.aspiration > 0:
+                # Above 1 kHz part of the voiced source is noise (its own stream) through the same envelope.
+                if breath is None:
+                    breath = torch.randn(hidden.shape[0], samples, device=hidden.device)
+                voiced = (self._shape(pulses, harmonic_response * self.pulse_share, c.synth_fft, c.synth_hop, self.synth_window)
+                          + self._shape(breath * audible, harmonic_response * self.breath_share, c.synth_fft, c.synth_hop,
+                                        self.synth_window))
+            else:
+                voiced = self._shape(pulses, harmonic_response, c.synth_fft, c.synth_hop, self.synth_window)
+            wave = voiced + self._shape(noise * audible, noise_response, c.noise_fft, c.noise_hop, self.noise_window)
             return wave * audible
 
 
@@ -372,8 +389,11 @@ class TinyVoca(nn.Module):
         # padding never changes a row's audio.
         noise = nn.utils.rnn.pad_sequence([torch.randn(int(n) * self.config.hop, generator=torch.Generator().manual_seed(seed + row))
                                            for row, n in enumerate(frame_lengths)], batch_first=True)
+        breath = nn.utils.rnn.pad_sequence([breath_noise(int(n) * self.config.hop, seed + row) for row, n in enumerate(frame_lengths)],
+                                           batch_first=True) if self.config.aspiration > 0 else None
         pitch = prosody[..., 0] + pitch_shift
         if pitch_jitter > 0:
             pitch = pitch + self.pitch_wobble(pitch.shape, pitch_jitter, seed, pitch.device)
-        wave = self.vocoder(acoustic, self.frequency(pitch), frame_lengths, noise=noise.to(hidden.device))
+        wave = self.vocoder(acoustic, self.frequency(pitch), frame_lengths, noise=noise.to(hidden.device),
+                            breath=None if breath is None else breath.to(hidden.device))
         return wave, frame_lengths * self.config.hop, {"durations": durations, "prosody": prosody, "frame_mask": frame_mask}
