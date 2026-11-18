@@ -80,8 +80,8 @@ python -m tiny_voca.infer --checkpoint slyszeglosy/slyszeglosy.pt --voice F \
 | `--pitch-range` | 1.0 | Skaluje ruch melodii wokół średniej |
 
 Tekst może mieć dowolną długość: jest czytany zdanie po zdaniu, a nagrania są
-sklejane. Liczby, daty, godziny, kwoty, procenty, jednostki, skróty i
-skrótowce rozwija `wymowa.normalize`.
+sklejane. Liczby, daty, godziny, kwoty, procenty, jednostki, numery telefonów,
+skróty i skrótowce rozwija `wymowa.normalize`.
 
 ### ONNX
 
@@ -179,7 +179,8 @@ przeprowadzono formalnego testu odsłuchowego.
 - Tylko polski. Dwa stałe głosy, bez klonowania.
 - Ten sam tekst jest zawsze czytany tak samo.
 - Głos brzmi czysto, ale słychać, że jest syntetyczny (generator źródło-filtr).
-- Liczebniki po przyimkach nie są odmieniane („z 5 osobami”).
+- Liczba po przyimku jest odmieniana („z 5 osobami” → „z pięcioma osobami”), ale
+  bez samotnej jedynki („z 1 osobą”) i liczb od tysiąca w górę.
 - Obce nazwy i nietypowa pisownia bywają czytane źle; wymowa zależy od
   reguł `wymowa` i słownika wyjątków `src/wymowa/lexicon.py`.
 - Bez strumieniowania.
