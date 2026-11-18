@@ -18,7 +18,7 @@ V1 (głosy F i M): wagi modelu, nagrania treningowe i głosy referencyjne
 (voices/) są na licencji CC BY-NC 4.0, bo wygenerował je OmniVoice (k2-fsa),
 którego wagi są udostępnione na licencji CC BY-NC.
 
-V2 (głos MC): wagi są w domenie publicznej (CC0 1.0). Model wytrenowano od
+V2 (głos MC): wagi są na licencji Apache-2.0, jak kod. Model wytrenowano od
 zera na nagraniach MC Speech (Mateusz Czyżnikiewicz, CC0) i trudnych
 przypadkach przeczytanych przez VoxCPM2 (OpenBMB, Apache-2.0), bez wag V1 i
 bez nagrań OmniVoice. Karta modelu: docs/model-card-v2/README.md.

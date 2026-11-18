@@ -1,5 +1,5 @@
 ---
-license: cc0-1.0
+license: apache-2.0
 language:
 - pl
 pipeline_tag: text-to-speech
@@ -17,8 +17,8 @@ lektora ze zbioru MC Speech. Cały model, razem z generatorem fali, ma 4,5 mln
 parametrów i został wytrenowany od zera na 20,7 h mowy. Na czterech wątkach
 CPU działa ok. 150× szybciej niż w czasie rzeczywistym.
 
-**Wagi są w domenie publicznej (CC0 1.0)**: można ich używać w dowolnym celu,
-także komercyjnym, bez pytania o zgodę i bez obowiązku podawania autora.
+**Wagi są na licencji Apache-2.0**, tak jak kod: można ich używać w dowolnym
+celu, także komercyjnym, z zachowaniem informacji o licencji i autorach.
 
 <audio controls src="https://huggingface.co/Damaon/slyszeglosy-v2/resolve/main/samples/lokomotywa-MC.wav"></audio>
 
@@ -32,7 +32,7 @@ także komercyjnym, bez pytania o zgodę i bez obowiązku podawania autora.
 | Wyjście | 24 kHz mono |
 | Wejście | Tekst zamieniany na głoski przez `wymowa` (reguły, bez słownika zewnętrznego) |
 | Wagi wstępnie wytrenowane w modelu | Brak |
-| Licencja wag | CC0 1.0 (kod: Apache-2.0) |
+| Licencja | Apache-2.0 (wagi i kod) |
 
 ## Pliki
 
@@ -42,6 +42,7 @@ także komercyjnym, bez pytania o zgodę i bez obowiązku podawania autora.
 | `onnx/slyszeglosy-v2.onnx` | 22,4 MB | Eksport ONNX, float32, opset 17 |
 | `onnx/slyszeglosy-v2.json` | | Metadane eksportu: słownik głosek, głosy, wejścia i wyjścia |
 | `config.json` | | Ustawienia modelu |
+| `LICENSE`, `NOTICE` | | Tekst licencji Apache-2.0 i informacja o autorach |
 | `samples/` | | Próbki z tej strony |
 
 SHA256:
@@ -208,18 +209,17 @@ model.
 
 ## Licencja
 
-Wagi: **CC0 1.0** (domena publiczna,
-https://creativecommons.org/publicdomain/zero/1.0/). W miarę możliwości
-prawnych autor zrzeka się wszystkich praw do wag; można ich używać, zmieniać
-i rozpowszechniać w dowolnym celu, także komercyjnym.
+Wagi i kod: **Apache-2.0** (https://www.apache.org/licenses/LICENSE-2.0).
+Można ich używać, zmieniać i rozpowszechniać w dowolnym celu, także
+komercyjnym. Kto rozpowszechnia wagi lub ich zmienioną wersję, dołącza tekst
+licencji i plik `NOTICE` oraz zaznacza swoje zmiany. Mowa wygenerowana
+modelem nie wymaga podpisu.
 
 Licencja wynika ze źródeł: MC Speech to domena publiczna (CC0), teksty Common
 Voice też (CC0), szablony napisano dla projektu, a VoxCPM2 jest na licencji
 Apache-2.0, która nie ogranicza użycia wygenerowanego dźwięku. Model nie
 korzysta z wag V1 ani z nagrań OmniVoice (CC-BY-NC). Aligner, Whisper i
 Parakeet służyły tylko do przygotowania danych i oceny.
-
-Kod (tiny-voca i `wymowa`) pozostaje na licencji Apache-2.0.
 
 ## Podziękowania
 

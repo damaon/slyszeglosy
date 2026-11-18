@@ -140,8 +140,8 @@ wskazuje też tiny-voca.
 
 Kod: Apache-2.0 (na bazie tiny-voca, Muhammed Nazeem). Wagi V1, nagrania i głosy:
 CC-BY-NC 4.0, bo wygenerował je OmniVoice (k2-fsa), którego wagi są
-CC-BY-NC. Wagi V2 (głos `MC` z MC Speech): CC0 1.0, czyli domena publiczna,
-także do użytku komercyjnego; szczegóły w
+CC-BY-NC. Wagi V2 (głos `MC` z MC Speech): Apache-2.0, jak kod, także do użytku
+komercyjnego; szczegóły w
 [docs/model-card-v2/README.md](docs/model-card-v2/README.md). Teksty: Mozilla Common Voice (CC0) i własne. Aligner:
 `facebook/wav2vec2-lv-60-espeak-cv-ft` (Apache-2.0, tylko do adnotacji). Ocena:
 Whisper (MIT).
