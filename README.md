@@ -110,7 +110,8 @@ PYTHONPATH=src:tests python -m unittest discover -s tests
 
 ## Ograniczenia
 
-- Tylko polski. Dwa stałe głosy, bez klonowania.
+- Tylko polski. Dwa stałe głosy, bez klonowania. Głos można przestroić w
+  stronę innego bez treningu, przez edycję wag: [docs/zmiana-glosu.md](docs/zmiana-glosu.md).
 - Liczebniki po przyimkach nie są odmieniane („z 5 osobami”).
 - Obce nazwy i nietypowa pisownia bywają czytane źle; poprawki trafiają do
   `src/wymowa/lexicon.py`.
