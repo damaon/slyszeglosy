@@ -93,6 +93,14 @@ STRESS = {
 }
 
 NORMALIZED = {
+    "Zadzwoń pod numer 600 123 456.": "Zadzwoń pod numer sześćset, sto dwadzieścia trzy, czterysta pięćdziesiąt sześć.",
+    "Tel. 601 234 567": "telefon sześćset jeden, dwieście trzydzieści cztery, pięćset sześćdziesiąt siedem",
+    "Mój numer to 600123456.": "Mój numer to sześćset, sto dwadzieścia trzy, czterysta pięćdziesiąt sześć.",
+    "Dzwoń: 600-012-345!": "Dzwoń: sześćset, zero jeden dwa, trzysta czterdzieści pięć!",
+    "Infolinia: +48 22 123 45 67.":
+        "Infolinia: plus czterdzieści osiem, dwadzieścia dwa, sto dwadzieścia trzy, czterdzieści pięć, sześćdziesiąt siedem.",
+    "Budżet wynosi 600 123 456 zł.":
+        "Budżet wynosi sześćset milionów sto dwadzieścia trzy tysiące czterysta pięćdziesiąt sześć złotych.",
     "Spotkanie o 15:30.": "Spotkanie o piętnastej trzydzieści.",
     "Od 9:05 do 17:00.": "Od dziewiątej zero pięć do siedemnastej.",
     "Przyjdę przed 8:15.": "Przyjdę przed ósmą piętnaście.",

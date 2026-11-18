@@ -238,6 +238,32 @@ def romans(text):
     return re.sub(rf"(?P<name>\b[{UPPER}][{LOWER}]{{2,}})[ \t]+(?P<n>[IVX]+)\b(?P<after>)(?P<w>)", roman, text)
 
 
+PHONE_CUE = re.compile(r"(?:\b(?:tel|telefon\w*|numer\w*|nr|zadzwoń|dzwoń|dzwonić|komórk\w*|sms\w*|infolini\w*|faks\w*|fax"
+                       r"|kontakt\w*|whatsapp)\b\.?:?\s*(?:\S+\s+){0,3})$", re.IGNORECASE)
+PHONE = re.compile(r"(?<![\d,.])(?<!\d[ -])(?P<cc>\+ ?48[ -]?)?(?P<body>\(?\d{2,3}\)?(?:[ -]\d{2,3}){2,3}|\d{9})(?![ -]?\d|[,.]\d)")
+
+
+def phones(text):
+    """Telephone numbers are read as they are grouped, a pause between groups: "600 123 456" ->
+    "sześćset, sto dwadzieścia trzy, czterysta pięćdziesiąt sześć"; a group with a leading zero is
+    read digit by digit. A number counts as a phone when it has nine digits and +48, hyphens or
+    brackets, or a cue word (tel., numer, zadzwoń...) just before it; "600 123 456 zł" stays an amount."""
+    def phone(m):
+        body = m["body"]
+        groups = re.findall(r"\d+", body)
+        if sum(map(len, groups)) != 9:
+            return m[0]
+        cued = bool(PHONE_CUE.search(text[max(0, m.start() - 60):m.start()]))
+        if not (m["cc"] or "-" in body or "(" in body or cued):
+            return m[0]
+        if len(groups) == 1:
+            groups = [body[:3], body[3:6], body[6:]]
+        words = [digits(g) if g.startswith("0") else cardinal(int(g)) for g in groups]
+        lead = "plus czterdzieści osiem, " if m["cc"] else ""
+        return lead + ", ".join(words)
+    return PHONE.sub(phone, text)
+
+
 def groups(text):
     text = re.sub(r"\b\d{1,3}(?:\.\d{3})+\b(?!\.\d)", lambda m: m[0].replace(".", ""), text)   # 10.000
     return re.sub(r"(?<=\d) (?=\d{3}\b)", "", text)                                          # 1 000 000
@@ -316,7 +342,7 @@ def normalize(text):
     text = re.sub(r"-{2,}|(?<=\s)-(?=\s)", "—", text)
     text = SPACES.sub(" ", text).replace("|", " ").replace("ˈ", "")    # the respelling marks are ours
     text = re.sub(r"(?<=\w)'(?=\w)", "", text)                  # O'Neill, McDonald's
-    for step in (groups, dates, years, times, money, percents, units, romans, plain_numbers, abbreviations, acronyms):
+    for step in (phones, groups, dates, years, times, money, percents, units, romans, plain_numbers, abbreviations, acronyms):
         text = step(text)
     text = hyphens(text)
     for symbol, words in SYMBOLS.items():
