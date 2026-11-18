@@ -93,6 +93,15 @@ STRESS = {
 }
 
 NORMALIZED = {
+    "Byłem tam z 5 osobami.": "Byłem tam z pięcioma osobami.",
+    "Mieszkał w 3 miastach.": "Mieszkał w trzech miastach.",
+    "Od 5 do 10 lat.": "Od pięciu do dziesięciu lat.",
+    "Dzięki 4 przyjaciołom.": "Dzięki czterem przyjaciołom.",
+    "Z 22 osobami.": "Z dwudziestoma dwiema osobami.",
+    "Około 452 km.": "Około czterystu pięćdziesięciu dwóch kilometrów.",
+    "Na 2 godziny, za 5 minut.": "Na dwie godziny, za pięć minut.",
+    "Mam 2 siostry.": "Mam dwie siostry.",
+    "Ze cztery kilometry.": "Ze cztery kilometry.",
     "Zadzwoń pod numer 600 123 456.": "Zadzwoń pod numer sześćset, sto dwadzieścia trzy, czterysta pięćdziesiąt sześć.",
     "Tel. 601 234 567": "telefon sześćset jeden, dwieście trzydzieści cztery, pięćset sześćdziesiąt siedem",
     "Mój numer to 600123456.": "Mój numer to sześćset, sto dwadzieścia trzy, czterysta pięćdziesiąt sześć.",

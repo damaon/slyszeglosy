@@ -111,7 +111,8 @@ PYTHONPATH=src:tests python -m unittest discover -s tests
 ## Ograniczenia
 
 - Tylko polski. Dwa stałe głosy, bez klonowania.
-- Liczebniki po przyimkach nie są odmieniane („z 5 osobami”).
+- Liczba po przyimku jest odmieniana („z 5 osobami” → „z pięcioma osobami”), ale
+  bez samotnej jedynki („z 1 osobą”) i liczb od tysiąca w górę.
 - Obce nazwy i nietypowa pisownia bywają czytane źle; poprawki trafiają do
   `src/wymowa/lexicon.py`.
 - Model nie jest lepszy od swojego nauczyciela: dziedziczy jego wymowę.
