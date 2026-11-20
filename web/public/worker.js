@@ -1,6 +1,6 @@
-// Runs the phonemizer (wymowa, through Pyodide) and the model (ONNX Runtime Web)
+// Runs the phonemizer (wymowa, through Pyodide) and the models (ONNX Runtime Web)
 // off the main thread. Messages in: {type: "load"} and {type: "speak", id, text,
-// voice, speed}. Messages out: status, ready, sentence (with its audio, as soon as
+// model, voice, speed}; model is "v1" or "v2", and V2 is downloaded the first time it is asked for. Messages out: status, ready, sentence (with its audio, as soon as
 // it is made), done (with the whole clip), error (plain: true when the message is
 // meant for the reader as it is).
 
@@ -9,12 +9,19 @@ const ORT = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/";
 
 importScripts(PYODIDE + "pyodide.js", ORT + "ort.wasm.min.js");
 
-let pyodide, phonemize, session, config;
+let pyodide, phonemize;
+
+// The two models share one phonemizer: build_assets.sh checks that they use the same symbols.
+const MODELS = {
+  v1: { file: "assets/model.onnx", config: "assets/config.json", label: "Ładowanie modelu" },
+  v2: { file: "assets/model-v2.onnx", config: "assets/config-v2.json", label: "Ładowanie głosu V2" },
+};
+const loaded = {};  // model name -> promise of {session, config}
 
 const status = (text, progress) => postMessage({ type: "status", text, progress });
 
 // Bump when the files under assets/ change, so browsers fetch them again.
-const VERSION = "pl-3";
+const VERSION = "pl-4";
 
 // Downloaded files are kept in the browser's cache storage: a second visit starts without the network.
 async function download(url, label) {
@@ -81,13 +88,22 @@ phonemize_json("Rozgrzewka.")
   phonemize = pyodide.globals.get("phonemize_json");
 }
 
-async function loadModel() {
-  config = await (await fetch("assets/config.json")).json();
-  const bytes = await download("assets/model.onnx", "Loading the model");
-  status("Starting the model");
+async function startModel(name) {
+  const { file, config: configFile, label } = MODELS[name];
+  const config = await (await fetch(configFile + "?v=" + VERSION)).json();
+  const bytes = await download(file, label);
+  status("Uruchamianie modelu");
   ort.env.wasm.wasmPaths = ORT;
   ort.env.wasm.numThreads = 1;
-  session = await ort.InferenceSession.create(bytes, { executionProviders: ["wasm"] });
+  const session = await ort.InferenceSession.create(bytes, { executionProviders: ["wasm"] });
+  return { session, config };
+}
+
+// A model that failed to load is tried again on the next request.
+function loadModel(name) {
+  if (!MODELS[name]) throw new Error("unknown model " + name);
+  if (!loaded[name]) loaded[name] = startModel(name).catch((error) => { delete loaded[name]; throw error; });
+  return loaded[name];
 }
 
 // A full stop after a title, a common abbreviation or an initial does not end a sentence.
@@ -121,19 +137,19 @@ function finished(text) {
 
 // One utterance holds at most max_tokens phonemes; longer sentences are cut at commas, then by words.
 // A sentence with nothing to pronounce gives no utterance.
-function fit(sentence) {
+function fit(sentence, config) {
   const result = JSON.parse(phonemize(sentence));
   if (!result) return [];
   if (result.ids.length <= config.model.max_tokens - 12) return [result];
   const pieces = sentence.split(/(?<=[,;:—])\s+/);
-  if (pieces.length > 1) return pieces.flatMap(fit);
+  if (pieces.length > 1) return pieces.flatMap((piece) => fit(piece, config));
   const words = sentence.split(" ");
   if (words.length < 2) return [];
   const half = Math.ceil(words.length / 2);
-  return [...fit(words.slice(0, half).join(" ")), ...fit(words.slice(half).join(" "))];
+  return [...fit(words.slice(0, half).join(" "), config), ...fit(words.slice(half).join(" "), config)];
 }
 
-async function synthesize(phones, voice, speed) {
+async function synthesize(session, phones, voice, speed) {
   const count = phones.ids.length;
   const integers = (values) => new ort.Tensor("int64", BigInt64Array.from(values.map(BigInt)), [1, count]);
   const scalar = (value) => new ort.Tensor("float32", Float32Array.from([value]), [1]);
@@ -156,7 +172,8 @@ function limitPeak(samples) {
 // Shown when no sentence of a text could be read. tiny_voca.infer.speak_text says the same.
 const ENGLISH_ONLY = "słyszę głosy czyta na razie tylko po polsku.";
 
-async function speak({ id, text, voice, speed }) {
+async function speak({ id, text, model, voice, speed }) {
+  const { session, config } = await loadModel(model);
   const started = performance.now();
   const list = sentences(finished(text));
   const chunks = [];
@@ -164,11 +181,11 @@ async function speak({ id, text, voice, speed }) {
   let modelTime = 0;
   for (let index = 0; index < list.length; index++) {
     let mark = performance.now();
-    const utterances = fit(list[index]);
+    const utterances = fit(list[index], config);
     phonemeTime += performance.now() - mark;
     for (const phones of utterances) {
       mark = performance.now();
-      const audio = await synthesize(phones, voice, speed);
+      const audio = await synthesize(session, phones, voice, speed);
       modelTime += performance.now() - mark;
       chunks.push(audio);
       // The page plays this sentence at once, before the whole clip is known: a copy, kept below full scale by itself.
@@ -194,8 +211,8 @@ async function speak({ id, text, voice, speed }) {
 onmessage = async ({ data }) => {
   try {
     if (data.type === "load") {
-      await Promise.all([loadPhonemizer(), loadModel()]);
-      postMessage({ type: "ready", voices: config.voices, sampleRate: config.sample_rate });
+      const [, { config }] = await Promise.all([loadPhonemizer(), loadModel("v1")]);
+      postMessage({ type: "ready", sampleRate: config.sample_rate });
     } else if (data.type === "speak") {
       await speak(data);
     }
