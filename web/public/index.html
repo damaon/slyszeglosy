@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>słyszę głosy</title>
-<meta name="description" content="słyszę głosy: polski model syntezy mowy, 4,5 mln parametrów, działa w przeglądarce.">
+<meta name="description" content="słyszę głosy: polski model syntezy mowy, 4,5 mln parametrów, trzy głosy, działa w przeglądarce.">
 <meta property="og:title" content="słyszę głosy">
-<meta property="og:description" content="Mały polski syntezator mowy z dwoma głosami. Działa w całości w przeglądarce, tekst nie opuszcza urządzenia.">
+<meta property="og:description" content="Mały polski syntezator mowy z trzema głosami. Działa w całości w przeglądarce, tekst nie opuszcza urządzenia.">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="pl_PL">
 <meta property="og:site_name" content="słyszę głosy">
@@ -18,7 +18,7 @@
 <meta property="og:image:alt" content="słyszę głosy: mały polski syntezator mowy, fala dźwięku i cytat z Reja „Iż Polacy nie gęsi, iż swój język mają”.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="słyszę głosy">
-<meta name="twitter:description" content="Mały polski syntezator mowy z dwoma głosami. Działa w całości w przeglądarce, tekst nie opuszcza urządzenia.">
+<meta name="twitter:description" content="Mały polski syntezator mowy z trzema głosami. Działa w całości w przeglądarce, tekst nie opuszcza urządzenia.">
 <meta name="twitter:image" content="https://slyszeglosy-demo.damaon.workers.dev/og.png">
 <link rel="canonical" href="https://slyszeglosy-demo.damaon.workers.dev/">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23171512'/%3E%3Cpath d='M8 13v6M12 9v14M16 12v8M20 7v18M24 13v6' stroke='%23f4efe6' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
@@ -91,8 +91,9 @@
 <main>
   <header>
     <h1>słyszę głosy</h1>
-    <p>Polski model syntezy mowy z dwoma głosami, <strong>4,5 mln parametrów</strong>, wytrenowany od zera.
-       Działa w całości w przeglądarce: nic, co wpiszesz, nie opuszcza Twojego urządzenia.</p>
+    <p>Polski model syntezy mowy, <strong>4,5 mln parametrów</strong>, wytrenowany od zera. Dwa syntetyczne głosy
+       z wersji V1 i prawdziwy głos lektora z <strong>V2</strong>. Działa w całości w przeglądarce: nic, co wpiszesz,
+       nie opuszcza Twojego urządzenia.</p>
   </header>
 
   <section class="panel">
@@ -101,8 +102,9 @@ Iż Polacy nie gęsi, iż swój język mają.</textarea>
     <div class="examples" id="examples"></div>
     <div class="controls">
       <div class="voices" role="radiogroup" aria-label="Głos">
-        <label><input type="radio" name="voice" value="0" checked><span>Kobieta</span></label>
-        <label><input type="radio" name="voice" value="1"><span>Mężczyzna</span></label>
+        <label title="V1, głos syntetyczny"><input type="radio" name="voice" value="v1:0" checked><span>Kobieta</span></label>
+        <label title="V1, głos syntetyczny"><input type="radio" name="voice" value="v1:1"><span>Mężczyzna</span></label>
+        <label title="V2, prawdziwy głos lektora (MC Speech); pobiera ok. 22 MB przy pierwszym użyciu"><input type="radio" name="voice" value="v2:0"><span>Lektor V2</span></label>
       </div>
       <label class="speed">Tempo <input id="speed" type="range" min="0.7" max="1.4" step="0.05" value="1"><output id="speed-value">1.00</output></label>
       <button id="speak" disabled>Czytaj</button>
@@ -124,21 +126,24 @@ Iż Polacy nie gęsi, iż swój język mają.</textarea>
   </section>
 
   <section class="facts">
-    <div><b>4 533 451</b><span>parametrów, z generatorem fali</span></div>
-    <div><b>21 MB</b><span>plik modelu (ONNX, float32)</span></div>
+    <div><b>4,5 mln</b><span>parametrów w modelu, z generatorem fali</span></div>
+    <div><b>21–22 MB</b><span>plik modelu (ONNX, float32)</span></div>
     <div><b>24 kHz</b><span>dźwięk mono</span></div>
-    <div><b>2 głosy</b><span>kobiecy i męski, syntetyczne</span></div>
-    <div><b>18 godzin</b><span>syntetycznej mowy do treningu</span></div>
-    <div><b>CC-BY-NC 4.0</b><span>wagi (kod: Apache-2.0)</span></div>
+    <div><b>3 głosy</b><span>dwa syntetyczne (V1) i lektor MC Speech (V2)</span></div>
+    <div><b>18 h / 21 h</b><span>mowy do treningu: syntetycznej (V1), lektora (V2)</span></div>
+    <div><b>Apache-2.0</b><span>wagi V2 i kod (wagi V1: CC-BY-NC 4.0)</span></div>
   </section>
 
   <footer>
     <a href="https://github.com/damaon/slyszeglosy" rel="noreferrer">Kod na GitHubie</a>
-    <a href="https://huggingface.co/Damaon/slyszeglosy" rel="noreferrer">Wagi na Hugging Face</a>
+    <a href="https://huggingface.co/Damaon/slyszeglosy-v2" rel="noreferrer">Wagi V2 na Hugging Face</a>
+    <a href="https://huggingface.co/Damaon/slyszeglosy" rel="noreferrer">Wagi V1 na Hugging Face</a>
+    <a href="https://huggingface.co/datasets/czyzi0/the-mc-speech-dataset" rel="noreferrer">Głos V2: MC Speech</a>
     <a href="https://github.com/n4ze3m/tiny-voca" rel="noreferrer">Inspiracja: tiny-voca</a>
-    <a href="https://huggingface.co/k2-fsa/OmniVoice" rel="noreferrer">Nauczyciel: OmniVoice</a>
-    <p>Pierwsza wizyta pobiera ok. 30 MB: model i środowisko Pythona dla fonetyzera. Tylko po polsku. Obce nazwy
-       i nietypowa pisownia bywają czytane źle. Użytek niekomercyjny (CC-BY-NC 4.0).</p>
+    <a href="https://huggingface.co/k2-fsa/OmniVoice" rel="noreferrer">Nauczyciel V1: OmniVoice</a>
+    <p>Pierwsza wizyta pobiera ok. 30 MB: model V1 i środowisko Pythona dla fonetyzera. Głos V2 dociąga kolejne
+       22 MB, gdy wybierzesz go pierwszy raz. Tylko po polsku. Obce nazwy i nietypowa pisownia bywają czytane źle.
+       Głosy V1 tylko do użytku niekomercyjnego (CC-BY-NC 4.0), V2 na licencji Apache-2.0, także komercyjnie.</p>
   </footer>
 </main>
 
@@ -243,8 +248,9 @@ $("speak").onclick = () => {
   listen();
   update();
   setStatus("Czytam…", 0);
-  worker.postMessage({ type: "speak", id: request, text: $("text").value,
-                       voice: Number(document.querySelector("input[name=voice]:checked").value), speed: Number($("speed").value) });
+  const [model, voice] = document.querySelector("input[name=voice]:checked").value.split(":");
+  worker.postMessage({ type: "speak", id: request, text: $("text").value, model, voice: Number(voice),
+                       speed: Number($("speed").value) });
 };
 $("text").addEventListener("keydown", (event) => {
   if ((event.metaKey || event.ctrlKey) && event.key === "Enter" && !$("speak").disabled) $("speak").click();
